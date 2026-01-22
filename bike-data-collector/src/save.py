@@ -8,29 +8,36 @@ DATA_PATH = Path("data/bikes.json")
 def save_json(new_bikes):
     if DATA_PATH.exists():
         with open(DATA_PATH, "r", encoding="utf-8") as f:
-            existing = json.load(f)
-            all_bikes = existing.get("bikes", [])
+            existing_data = json.load(f)
+            existing_bikes = existing_data.get("bikes", [])
     else:
-        all_bikes = []
+        existing_bikes = []
 
-    seen = {
-        (b.get("brand"), b.get("model"))
-        for b in all_bikes
+    index = {
+        (b.get("brand"), b.get("model")): b
+        for b in existing_bikes
     }
 
     for bike in new_bikes:
         key = (bike.get("brand"), bike.get("model"))
-        if key not in seen:
-            all_bikes.append(bike)
-            seen.add(key)
+        if key in index:
+            # UPDATE existing entry
+            index[key].update(bike)
+        else:
+            # INSERT new entry
+            existing_bikes.append(bike)
+            index[key] = bike
 
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.2",
         "scraped_at": datetime.utcnow().isoformat(),
         "source": SOURCE,
-        "count": len(all_bikes),
-        "bikes": all_bikes
+        "count": len(existing_bikes),
+        "bikes": existing_bikes
     }
 
     with open(DATA_PATH, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
+
+        print("Writing to:", DATA_PATH.resolve())
+
