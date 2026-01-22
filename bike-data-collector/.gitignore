@@ -1,0 +1,24 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Data outputs (scraped files)
+data/*.json
+
+# Logs
+*.log
+
+# Playwright
+playwright/.cache/
