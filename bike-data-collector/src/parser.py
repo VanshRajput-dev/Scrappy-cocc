@@ -10,7 +10,7 @@ def parse_bikes(html):
     for a in soup.find_all("a", href=True):
         href = a["href"]
 
-        if not href.startswith("/tvs-bikes/"):
+        if not href.startswith("/yamaha-bikes/"):
             continue
 
         name = a.get_text(strip=True)
@@ -18,7 +18,7 @@ def parse_bikes(html):
             continue
 
         bikes.append({
-            "brand": "TVS",
+            "brand": "Yamaha",
             "model": name,
             "price_inr": None,
             "detail_url": urljoin(BASE, href),
