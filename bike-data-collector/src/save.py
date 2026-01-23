@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from src.config import SOURCE
 
-DATA_PATH = Path("data/bikes.json")
+DATA_PATH = Path("data/bikes_enriched.json")
 
 def save_json(new_bikes):
     if DATA_PATH.exists():
