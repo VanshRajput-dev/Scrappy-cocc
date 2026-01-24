@@ -1,52 +1,58 @@
-import re
 from bs4 import BeautifulSoup
+from src.spec_parser import extract_specs
 
-import re
+# Only labels we CARE about (hard gate)
+VALID_LABEL_KEYWORDS = {
+    "engine",
+    "displacement",
+    "power",
+    "torque",
+    "weight",
+    "mileage"
+}
 
-def extract_number(text):
-    if not text:
-        return None
-
-    match = re.search(r"\d+(\.\d+)?", text)
-    if not match:
-        return None
-
-    try:
-        return float(match.group())
-    except ValueError:
-        return None
-
-
-def parse_detail_page(html):
+def parse_bike_page(html):
     soup = BeautifulSoup(html, "html.parser")
-    text = soup.get_text(" ", strip=True).lower()
+    rows = []
 
-    specs = {
-        "engine_cc": None,
-        "power": None,
-        "torque": None,
-        "mileage": None,
-        "abs": None,
-        "kerb_weight": None
-    }
+    # 1️⃣ Table-based specs (most reliable)
+    for tr in soup.select("table tr"):
+        tds = tr.find_all("td")
+        if len(tds) == 2:
+            label = tds[0].get_text(strip=True)
+            value = tds[1].get_text(strip=True)
+            rows.append((label, value))
 
-    def find_after(keyword):
-        idx = text.find(keyword)
-        if idx == -1:
-            return None
-        return text[idx:idx+80]
+    # 2️⃣ Definition lists (dt / dd)
+    for dl in soup.find_all("dl"):
+        dts = dl.find_all("dt")
+        dds = dl.find_all("dd")
+        for dt, dd in zip(dts, dds):
+            rows.append((
+                dt.get_text(strip=True),
+                dd.get_text(strip=True)
+            ))
 
-    specs["engine_cc"] = extract_number(find_after("engine"))
-    specs["power"] = extract_number(find_after("bhp"))
-    specs["torque"] = extract_number(find_after("nm"))
-    specs["mileage"] = extract_number(find_after("kmpl"))
-    specs["kerb_weight"] = extract_number(find_after("kg"))
+    # 3️⃣ BikeWale spec blocks (div-based, but guarded)
+    divs = soup.find_all("div")
+    for i in range(len(divs) - 1):
+        label = divs[i].get_text(strip=True)
+        value = divs[i + 1].get_text(strip=True)
 
-    if "dual channel abs" in text:
-        specs["abs"] = "dual"
-    elif "single channel abs" in text:
-        specs["abs"] = "single"
-    elif "abs" in text:
-        specs["abs"] = "yes"
+        if not label or not value:
+            continue
 
-    return specs
+        l = label.lower()
+
+        # 🔒 HARD FILTER — only spec-like labels
+        if not any(k in l for k in VALID_LABEL_KEYWORDS):
+            continue
+
+        # 🔒 Avoid obvious junk
+        if len(label) > 40:
+            continue
+
+        rows.append((label, value))
+
+    # 🔥 SINGLE source of truth for interpretation
+    return extract_specs(rows)

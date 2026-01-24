@@ -1,43 +1,32 @@
 import json
-from datetime import datetime
+import csv
 from pathlib import Path
-from src.config import SOURCE
 
-DATA_PATH = Path("data/bikes_enriched.json")
+FIELDS = [
+    "brand", "model",
+    "price_inr", "price_bucket", "status",
+    "engine_cc", "power_bhp", "torque_nm",
+    "kerb_weight_kg", "mileage_kmpl",
+    "fuel_type", "vehicle_category", "abs",
+    "fuel_tank_l", "detail_url"
+]
 
-def save_json(new_bikes):
-    if DATA_PATH.exists():
-        with open(DATA_PATH, "r", encoding="utf-8") as f:
-            existing_data = json.load(f)
-            existing_bikes = existing_data.get("bikes", [])
-    else:
-        existing_bikes = []
+OUT = Path("output")
+JSON_PATH = OUT / "bikes.json"
+CSV_PATH = OUT / "bikes.csv"
 
-    index = {
-        (b.get("brand"), b.get("model")): b
-        for b in existing_bikes
-    }
+def init_output():
+    OUT.mkdir(exist_ok=True)
+    JSON_PATH.write_text("[]", encoding="utf-8")
+    with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
+        csv.DictWriter(f, fieldnames=FIELDS).writeheader()
 
-    for bike in new_bikes:
-        key = (bike.get("brand"), bike.get("model"))
-        if key in index:
-            # UPDATE existing entry
-            index[key].update(bike)
-        else:
-            # INSERT new entry
-            existing_bikes.append(bike)
-            index[key] = bike
+def save(record):
+    clean = {k: record.get(k) for k in FIELDS}
 
-    payload = {
-        "schema_version": "1.2",
-        "scraped_at": datetime.utcnow().isoformat(),
-        "source": SOURCE,
-        "count": len(existing_bikes),
-        "bikes": existing_bikes
-    }
+    data = json.loads(JSON_PATH.read_text())
+    data.append(clean)
+    JSON_PATH.write_text(json.dumps(data, indent=2))
 
-    with open(DATA_PATH, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=False)
-
-        print("Writing to:", DATA_PATH.resolve())
-
+    with open(CSV_PATH, "a", newline="", encoding="utf-8") as f:
+        csv.DictWriter(f, fieldnames=FIELDS).writerow(clean)

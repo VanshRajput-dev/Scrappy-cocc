@@ -6,19 +6,10 @@ from src.config import HEADERS, TIMEOUT
 BASE = "https://www.bikewale.com"
 BRAND_PAGE = "https://www.bikewale.com/new-bikes-in-india/"
 
-EXCLUDE_KEYWORDS = {
-    "compare",
-    "best",
-    "upcoming",
-    "search",
-    "mileage",
-    "100cc",
-    "110cc",
-    "125cc",
-    "150cc",
-    "200cc",
-    "250cc",
-    "500cc"
+EXCLUDE = {
+    "compare", "best", "upcoming", "search",
+    "mileage", "100cc", "110cc", "125cc",
+    "150cc", "200cc", "250cc", "500cc"
 }
 
 def get_all_brands():
@@ -28,13 +19,9 @@ def get_all_brands():
     soup = BeautifulSoup(r.text, "html.parser")
     brands = {}
 
-    for a in soup.find_all("a", href=True):
+    for a in soup.select("a[href$='-bikes/']"):
         href = a["href"]
-
-        if not href.endswith("-bikes/"):
-            continue
-
-        if any(x in href for x in EXCLUDE_KEYWORDS):
+        if any(x in href for x in EXCLUDE):
             continue
 
         name = a.get_text(strip=True)

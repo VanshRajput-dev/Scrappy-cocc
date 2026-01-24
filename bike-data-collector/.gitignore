@@ -22,3 +22,15 @@ data/*.json
 
 # Playwright
 playwright/.cache/
+
+# Data files (generated)
+data/*.json
+!data/bikes_sample.json
+
+# Output artifacts
+output/
+
+# Python junk
+__pycache__/
+*.pyc
+venv/

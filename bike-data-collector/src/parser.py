@@ -18,6 +18,15 @@ JUNK_KEYWORDS = {
 }
 
 def parse_bikes(html, brand, prefix):
+    """
+    Listing-page parser.
+
+    IMPORTANT:
+    - Extracts ONLY metadata available on listing cards
+    - Does NOT extract or infer technical specifications
+    - All specs MUST be populated from detail pages later
+    """
+
     soup = BeautifulSoup(html, "html.parser")
     bikes = []
     seen = set()
@@ -25,7 +34,6 @@ def parse_bikes(html, brand, prefix):
     for a in soup.find_all("a", href=True):
         href = a["href"]
 
-        # relaxed match (important)
         if prefix not in href:
             continue
 
@@ -35,15 +43,12 @@ def parse_bikes(html, brand, prefix):
 
         model_lower = model_name.lower()
 
-        # 🔴 FILTER UI JUNK
         if any(j in model_lower for j in JUNK_KEYWORDS):
             continue
 
-        # 🔴 FILTER CORRUPTED NAMES (Hunter 350151 etc.)
         if re.search(r"\d{3,}$", model_name):
             continue
 
-        # Remove brand repetition
         if model_lower.startswith(brand.lower()):
             model_name = model_name[len(brand):].strip()
 
@@ -84,10 +89,14 @@ def parse_bikes(html, brand, prefix):
             "launch_date": launch_date,
             "status": status,
             "detail_url": urljoin(BASE, href),
+
+            # Technical specs – MUST be filled from detail pages
             "engine_cc": None,
-            "power": None,
-            "torque": None,
-            "mileage": None,
+            "power_bhp": None,
+            "torque_nm": None,
+            "kerb_weight_kg": None,
+            "mileage_kmpl": None,
+
             "category": "Bike"
         })
 
