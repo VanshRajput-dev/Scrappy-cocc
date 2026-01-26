@@ -9,10 +9,6 @@ Instead of asking users to manually enter bike specifications, the system allows
 them to **select a bike model**, after which all required technical parameters are
 automatically available for downstream algorithms.
 
-The primary use case is:
-> **Selecting the right bike for a given route** based on terrain, traffic,
-distance, and riding conditions.
-
 ---
 
 ## 🎯 Key Design Principles
